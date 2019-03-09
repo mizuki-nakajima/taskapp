@@ -10,9 +10,11 @@ import UIKit
 import RealmSwift
 import UserNotifications
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var searchCategory: UISearchBar!
+    //var searchResult : String
     
     // Realmインスタンスを取得する
     let realm = try! Realm()
@@ -27,6 +29,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         // Do any additional setup after loading the view, typically from a nib.
         tableView.delegate = self
         tableView.dataSource = self
+        searchCategory.delegate = self
+        
     }
 
     // MARK: UITableViewDataSourceプロトコルのメソッド
@@ -91,6 +95,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
 
+    //searchCategryで文字が入力されたときのメソッド
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        if searchText == "" {
+            taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: false)
+            //テーブルを再読み込み
+            tableView.reloadData()
+        } else {
+            let searchWord = NSPredicate(format: "category = %@", searchText)
+            taskArray = realm.objects(Task.self).filter(searchWord)
+            //テーブルを再読み込み
+            tableView.reloadData()
+        }
+
+    }
+    
     // segue で画面遷移するに呼ばれる
     override func prepare(for segue: UIStoryboardSegue, sender: Any?){
         let inputViewController:InputViewController = segue.destination as! InputViewController
