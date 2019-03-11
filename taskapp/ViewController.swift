@@ -23,7 +23,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // 日付近い順\順でソート：降順
     // 以降内容をアップデートするとリスト内は自動的に更新される。
     var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)
-
+    // カテゴリ一覧
+    let categoryArray = try! Realm().objects(Category.self).sorted(byKeyPath: "categoryName", ascending: true)
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -32,14 +34,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         searchCategory.delegate = self
         
     }
-
+    
     // MARK: UITableViewDataSourceプロトコルのメソッド
     // データの数（＝セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return taskArray.count
     }
     
-     // 各セルの内容を返すメソッド
+    // 各セルの内容を返すメソッド
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // 再利用可能な cell を得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
@@ -60,7 +62,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // MARK: UITableViewDelegateプロトコルのメソッド
     // 各セルを選択した時に実行されるメソッド
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-         performSegue(withIdentifier: "cellSegue",sender: nil)
+        performSegue(withIdentifier: "cellSegue",sender: nil)
     }
     
     // セルが削除が可能なことを伝えるメソッド
@@ -94,21 +96,24 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
         }
     }
-
+    
     //searchCategryで文字が入力されたときのメソッド
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
-        if searchText == "" {
+        if searchText.isEmpty {
             taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: false)
-            //テーブルを再読み込み
-            tableView.reloadData()
         } else {
-            let searchWord = NSPredicate(format: "category = %@", searchText)
-            taskArray = realm.objects(Task.self).filter(searchWord)
-            //テーブルを再読み込み
-            tableView.reloadData()
+            let searchWord = NSPredicate(format: "categoryName = %@", searchText)
+            if let category = realm.objects(Category.self).filter(searchWord).first {
+                print(category)
+                let predicate = NSPredicate(format: "category = %@", category)
+                print(taskArray.first?.category)
+                
+                taskArray = realm.objects(Task.self).filter(predicate).sorted(byKeyPath: "date", ascending: false)
+            }
         }
-
+        //テーブルを再読み込み
+        tableView.reloadData()
     }
     
     // segue で画面遷移するに呼ばれる
@@ -138,6 +143,5 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     
-
+    
 }
-

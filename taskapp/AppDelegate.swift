@@ -10,6 +10,7 @@ import UIKit
 import UserNotifications
 
 @UIApplicationMain
+
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate,UISearchBarDelegate {
     var window: UIWindow?
 
