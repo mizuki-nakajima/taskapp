@@ -10,11 +10,15 @@ import UIKit
 import RealmSwift
 import UserNotifications
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIPickerViewDelegate, UIPickerViewDataSource{
     
     @IBOutlet weak var tableView: UITableView!
-    @IBOutlet weak var searchCategory: UISearchBar!
-    //var searchResult : String
+    //@IBOutlet weak var searchCategory: UISearchBar!
+    @IBOutlet weak var searchCategoryField: UITextField!
+    
+    
+    var pickerView: UIPickerView = UIPickerView()
+    var categoryClass: Category!
     
     // Realmインスタンスを取得する
     let realm = try! Realm()
@@ -26,14 +30,84 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // カテゴリ一覧
     let categoryArray = try! Realm().objects(Category.self).sorted(byKeyPath: "categoryName", ascending: true)
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         tableView.delegate = self
         tableView.dataSource = self
-        searchCategory.delegate = self
+        pickerView.delegate = self
+        pickerView.dataSource = self
+        pickerView.showsSelectionIndicator = true
+        
+        let toolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 100, height: 35))
+        let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(ViewController.done))
+        let cancelItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(ViewController.cancel))
+        //let doneItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: Selector(("done")))
+        //let cancelItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(Progress.cancel))
+        toolbar.setItems([cancelItem, doneItem], animated: true)
+        
+        self.searchCategoryField.inputView = pickerView
+        self.searchCategoryField.inputAccessoryView = toolbar
         
     }
+    
+    // UIPickerViewの列の数
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+    
+    // UIPickerViewの行数、要素の全数
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return categoryArray.count
+    }
+    
+    // UIPickerViewに表示する配列
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        //print(categoryArray.categoryName)
+        
+        //すべてのCategoryオブジェクトを取得
+        let allCategory = realm.objects(Category.self)
+        print(allCategory)
+       // return categoryArray[allCategory]
+        //return categoryArray[categoryClass.categoryName]
+        //return realm.objects(Category.self(value: categoryClass.categoryName))
+        //return realm.objects(categoryClass!.categoryName)
+        return categoryArray[row].categoryName
+    }
+    
+    // UIPickerViewのRowが選択された時の挙動
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        self.searchCategoryField.text = categoryArray[row].categoryName
+        
+        if self.searchCategoryField.text == "" {
+           taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: false)
+        } else {
+                let predicate = NSPredicate(format: "category = %@", categoryArray[row])
+                print(predicate)
+            taskArray = realm.objects(Task.self).filter(predicate).sorted(byKeyPath: "date", ascending: false)
+        }
+        //テーブルを再読み込み
+        tableView.reloadData()
+    }
+    
+    @objc func cancel() {
+        self.searchCategoryField.text = ""
+        self.searchCategoryField.endEditing(true)
+        taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: false)
+        tableView.reloadData()
+    }
+    
+    @objc func done() {
+        self.searchCategoryField.endEditing(true)
+    }
+    
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+
     
     // MARK: UITableViewDataSourceプロトコルのメソッド
     // データの数（＝セルの数）を返すメソッド
@@ -97,24 +171,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
     
-    //searchCategryで文字が入力されたときのメソッド
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        
-        if searchText.isEmpty {
-            taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: false)
-        } else {
-            let searchWord = NSPredicate(format: "categoryName = %@", searchText)
-            if let category = realm.objects(Category.self).filter(searchWord).first {
-                print(category)
-                let predicate = NSPredicate(format: "category = %@", category)
-                print(taskArray.first?.category)
-                
-                taskArray = realm.objects(Task.self).filter(predicate).sorted(byKeyPath: "date", ascending: false)
-            }
-        }
-        //テーブルを再読み込み
-        tableView.reloadData()
-    }
+
     
     // segue で画面遷移するに呼ばれる
     override func prepare(for segue: UIStoryboardSegue, sender: Any?){
