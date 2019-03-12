@@ -122,8 +122,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         // Cellに値を設定する.
         let task = taskArray[indexPath.row]
-        cell.textLabel?.text = task.title + "(カテゴリー：" + categoryArray[indexPath.row].categoryName + ")"
-        //cell.textLabel?.text = categoryArray[indexPath.row].categoryName
+        cell.textLabel?.text = task.title + "(カテゴリー：" + task.category!.categoryName + ")"
         
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
@@ -133,7 +132,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         return cell
     }
-    
     // MARK: UITableViewDelegateプロトコルのメソッド
     // 各セルを選択した時に実行されるメソッド
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
